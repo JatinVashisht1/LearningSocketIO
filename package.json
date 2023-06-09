@@ -1,0 +1,18 @@
+{
+  "name": "22_getting_started_with_socket",
+  "type": "module",
+  "version": "1.0.0",
+  "main": "index.js",
+  "license": "MIT",
+  "scripts": {
+    "dev": "nodemon server.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "socket.io": "^4.6.2"
+  },
+  "devDependencies": {
+    "nodemon": "^2.0.22",
+    "socket.io-client": "^4.6.2"
+  }
+}
