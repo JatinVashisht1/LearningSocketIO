@@ -4,6 +4,7 @@ import { dirname } from "path";
 import { fileURLToPath } from "url";
 import { Server } from "socket.io";
 import http from "http";
+import { logger } from "./utility/logger.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -15,7 +16,7 @@ const io = new Server(server);
 
 app.get('/', (req, res, next) => {
     // return res.sendFile(__dirname + '/index.html');
-    console.log("something happened.");
+    logger("something happened.", __filename);
     return res.status(200).json({success: true});
 });
 
@@ -24,9 +25,9 @@ app.get('/', (req, res, next) => {
  * This is special event that is called automatically whenever a new client is connected.
  */
 io.on('connection', (socket)=>{
-    console.log(`a user connected`);
+    logger(`a user connected`);
     socket.on('myEvent', () => {
-        console.log("yo wassup!");
+        logger("yo wassup!", __filename);
         socket.emit('This is emmited.');
     });
 
@@ -34,7 +35,7 @@ io.on('connection', (socket)=>{
      * this is a "chatMesssage" event, that will be sent by a client.
      */
     socket.on('chatMessage', (message) => {
-        console.log(`this messasge is received: \"${message}\"`);
+        logger(`this messasge is received: \"${message}\"`, __filename);
 
         /**
          * io.emit will emit "chatMessage" event globally to all users.
@@ -46,6 +47,34 @@ io.on('connection', (socket)=>{
         // you can use "socket.emit(...)" instead of "io.emit(...)"
     });
 
+    const users = [];
+    
+    for (let [id, socket] of io.of("/").sockets) {
+        users.push({
+            id: id,
+            username: "Placeholder value"
+        });
+    }
+
+    socket.emit("users", users);
+
+    /**
+     * This event listens to any private message being sent by a user to any other user.
+     * This will send the message to recipient accordingly.
+     */
+    socket.on("private message", ({content, to})=> {
+        /**
+         * This code snippet is used to emit a message to a chat room
+         * socket.to(...) a feature in socket io called rooms.
+         * we can create our own rooms also.
+         * The logic of rooms is on server side of application only, presentation layer should not be aware of it.
+         */
+        socket.to(to).emit("private message", {
+            content,
+            from: socket.id
+        });
+    })
+
     /**
      * This line will broadcast events to all connected clients except the client who sent this message.
      */
@@ -55,10 +84,10 @@ io.on('connection', (socket)=>{
      * This is special event, that is called automatically whenever a client is disconnected.
      */
     socket.on('disconnect', () => {
-        console.log(`user disconnected, user socket id: ${socket.id}`);
+        logger(`user disconnected, user socket id: ${socket.id}`, __filename);
     });
 });
 
 server.listen(port, () => {
-    console.log(`server up on http://localhost:${port}`);
+    logger(`server up on http://localhost:${port}`, __filename);
 });
